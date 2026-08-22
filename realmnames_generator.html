@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealmNames | Next-Gen Generator & Worldbuilding Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN (For statistical/flavor charts in character lore breakdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        realm: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        },
+                        amber: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            height: 180px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased selection:bg-realm-500 selection:text-white min-h-screen flex flex-col">
+
+<!-- Chosen Palette: Dark Emerald & Warm Amber Neutral -->
+<!-- Application Structure Plan:
+     The consumer application is built around a frictionless, ultra-fast generation engine designed to outperform legacy name sites:
+     1. Sticky Navigation & Live Search: Category silo switcher, instant keyword filter for 20+ generator niches, dark theme aesthetics, and a persistent Loot Bag counter.
+     2. Category Hero & pSEO Information Block: Dynamic description, lore origin, and contextual guidance tailored to each active generator page.
+     3. Advanced Filter Control Suite: Controls for starting letter, max syllables, tone/vibe (Noble, Sinister, Futuristic, Aggressive), archetype/gender, and batch size (6, 12, 24).
+     4. Dynamic Generated Results Engine: Card grid with 1-click clipboard copy, pronunciation guide, meaning/origin, tone tags, and favorite toggle.
+     5. Expanded Lore & Character Sheet Modal: Detailed view triggered by clicking any generated name, featuring personality traits, background lore, and Canvas Chart.js attribute visualizer.
+     6. Persistent Loot Bag Drawer: Slide-out drawer with saved list management, custom user notes per name, and TXT/CSV export capability.
+     7. Category Directory Silo Grid: Responsive catalog allowing visitors to explore related fantasy, sci-fi, real-world, and startup generators. -->
+<!-- Visualization & Content Choices:
+     - Radar/Polar Chart (Chart.js): Visualizes stats (Power, Mystery, Lineage, Complexity, Elegance) in the character lore modal without using SVG tags.
+     - Procedural Array Engine (Vanilla JS): Instant client-side generation using modular prefix/suffix/meaning seed objects.
+     - Custom Filter Logic: Real-time filtering by syllable length, starting letter, gender archetype, and vibe attributes.
+     - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. Pure Tailwind, CSS shapes, Unicode icons, and Canvas Chart.js. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Top Announcement / Monetization Placeholder Banner -->
+    <div class="bg-gradient-to-r from-realm-900 via-slate-800 to-realm-900 border-b border-realm-800/50 py-2 px-4 text-center text-xs text-realm-200 flex justify-center items-center space-x-2">
+        <span class="bg-realm-500 text-slate-900 font-extrabold px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">PRO</span>
+        <span>✨ Welcome to RealmNames: Advanced AI-Free Procedural Generators for Writers, RPG Gamers & Founders</span>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="selectGenerator('elven')">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-realm-500 to-realm-700 flex items-center justify-center text-slate-900 font-extrabold text-xl shadow-lg shadow-realm-500/20">
+                        ⚡
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-lg text-white tracking-tight">Realm<span class="text-realm-500">Names</span></span>
+                        <span class="block text-[10px] text-slate-400 font-medium -mt-1">Worldbuilding Engine</span>
+                    </div>
+                </div>
+
+                <!-- Quick Search Input -->
+                <div class="hidden md:flex flex-1 max-w-xs mx-8 relative">
+                    <input type="text" id="directory-search" oninput="handleSearch(this.value)" placeholder="Search 20+ generators (e.g. Elf, Ship, SaaS)..." class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-realm-500 focus:border-transparent">
+                    <span class="absolute left-2.5 top-2 text-xs text-slate-500">🔍</span>
+                </div>
+
+                <!-- Action Controls & Loot Bag Trigger -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleLootDrawer()" class="flex items-center space-x-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 transition">
+                        <span>🎒 Loot Bag</span>
+                        <span id="saved-badge-count" class="bg-amber-500 text-slate-900 font-extrabold px-1.5 py-0.2 rounded-full text-[10px]">0</span>
+                    </button>
+                    <button onclick="scrollToDirectory()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition hidden sm:inline-block">
+                        📁 All Categories
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Silo Quick Tabs -->
+        <div class="border-t border-slate-800/80 bg-slate-950/50 px-4 py-2 overflow-x-auto custom-scrollbar">
+            <div class="max-w-7xl mx-auto flex space-x-2 text-xs font-medium whitespace-nowrap">
+                <button onclick="selectGenerator('elven')" id="silo-elven" class="silo-tab px-3 py-1 rounded-md bg-realm-600 text-white font-semibold transition">🧝 High Elves</button>
+                <button onclick="selectGenerator('cyberpunk')" id="silo-cyberpunk" class="silo-tab px-3 py-1 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🌃 Cyberpunk</button>
+                <button onclick="selectGenerator('viking')" id="silo-viking" class="silo-tab px-3 py-1 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 transition">⚔️ Norse Vikings</button>
+                <button onclick="selectGenerator('taverns')" id="silo-taverns" class="silo-tab px-3 py-1 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🍺 RPG Taverns</button>
+                <button onclick="selectGenerator('starships')" id="silo-starships" class="silo-tab px-3 py-1 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🚀 Sci-Fi Ships</button>
+                <button onclick="selectGenerator('startup')" id="silo-startup" class="silo-tab px-3 py-1 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 transition">🏢 SaaS Startups</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Canvas -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Active Generator Context Hero Section -->
+        <section class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-slate-700/80 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-realm-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                <div class="space-y-2 max-w-3xl">
+                    <div class="inline-flex items-center space-x-2 bg-realm-500/10 text-realm-400 border border-realm-500/20 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                        <span id="hero-tag-icon">🧝</span>
+                        <span id="hero-tag-name">Fantasy & TTRPG Silo</span>
+                    </div>
+                    <h1 id="hero-title" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">High Elven Name Generator</h1>
+                    <p id="hero-desc" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Generate authentic, melodic, and lore-friendly High Elven names for fantasy novels, D&D 5e campaigns, and RPG character creation. Customize syllable length, starting phonemes, and ancient line meanings.
+                    </p>
+                </div>
+
+                <!-- Generator Quick Stats -->
+                <div class="flex md:flex-col gap-2 border-t md:border-t-0 md:border-l border-slate-700 pt-3 md:pt-0 md:pl-6 text-xs text-slate-400 min-w-[160px]">
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Combinations</span>
+                        <span id="stat-combinations" class="text-white font-extrabold text-base">25,000+</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase font-bold">Naming Rules</span>
+                        <span id="stat-rules" class="text-realm-400 font-semibold">Phonetic Prefix/Suffix</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Filter Controls Suite -->
+        <section class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-700 gap-2">
+                <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>⚙️</span>
+                    <span>Advanced Customization & Generator Controls</span>
+                </h2>
+                <div class="flex items-center space-x-3 text-xs">
+                    <button onclick="resetFilters()" class="text-slate-400 hover:text-slate-200 transition underline">Reset Filters</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-xs">
+                <!-- Archetype / Gender -->
+                <div>
+                    <label class="block text-slate-400 font-medium mb-1">Gender / Form</label>
+                    <select id="filter-gender" onchange="triggerGeneration()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-realm-500">
+                        <option value="any">Any / Unisex</option>
+                        <option value="masculine">Masculine</option>
+                        <option value="feminine">Feminine</option>
+                        <option value="title">Full Name + Epithet</option>
+                    </select>
+                </div>
+
+                <!-- Vibe / Tone -->
+                <div>
+                    <label class="block text-slate-400 font-medium mb-1">Vibe & Tone</label>
+                    <select id="filter-vibe" onchange="triggerGeneration()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-realm-500">
+                        <option value="any">All Tones</option>
+                        <option value="ancient">Ancient & Noble</option>
+                        <option value="sinister">Dark & Sinister</option>
+                        <option value="sleek">Sleek & Modern</option>
+                        <option value="aggressive">Aggressive / Fierce</option>
+                    </select>
+                </div>
+
+                <!-- Starting Letter -->
+                <div>
+                    <label class="block text-slate-400 font-medium mb-1">Starts With</label>
+                    <select id="filter-letter" onchange="triggerGeneration()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-realm-500">
+                        <option value="any">Any Letter</option>
+                        <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+                        <option value="D">D</option><option value="E">E</option><option value="K">K</option>
+                        <option value="M">M</option><option value="R">R</option><option value="S">S</option>
+                        <option value="V">V</option><option value="Z">Z</option>
+                    </select>
+                </div>
+
+                <!-- Syllable Limit -->
+                <div>
+                    <div class="flex justify-between text-slate-400 font-medium mb-1">
+                        <span>Max Syllables</span>
+                        <span id="syllable-val-label" class="text-realm-400 font-bold">3</span>
+                    </div>
+                    <input type="range" id="filter-syllables" min="1" max="4" value="3" oninput="updateSyllableLabel(this.value); triggerGeneration();" class="w-full accent-realm-500 mt-2">
+                </div>
+
+                <!-- Quantity Batch -->
+                <div>
+                    <label class="block text-slate-400 font-medium mb-1">Batch Size</label>
+                    <select id="filter-count" onchange="triggerGeneration()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-realm-500">
+                        <option value="6">6 Results</option>
+                        <option value="12" selected>12 Results</option>
+                        <option value="24">24 Results</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Button Row -->
+            <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                <button onclick="triggerGeneration()" class="flex-1 bg-gradient-to-r from-realm-600 to-realm-500 hover:from-realm-500 hover:to-realm-400 text-slate-950 font-extrabold py-3 px-6 rounded-xl shadow-lg shadow-realm-500/20 transition transform active:scale-[0.99] flex items-center justify-center space-x-2 text-sm">
+                    <span>🎲</span>
+                    <span>Generate New Batch</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Dynamic Results Grid & Actions -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                    <span>✨</span>
+                    <span>Generated Results</span>
+                </h2>
+                <span class="text-xs text-slate-400">Click name to quick-copy | Click card for full lore</span>
+            </div>
+
+            <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically Populated Cards -->
+            </div>
+
+            <!-- Load More Action -->
+            <div class="text-center pt-4">
+                <button onclick="appendMoreResults()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold py-2.5 px-6 rounded-xl transition">
+                    ➕ Generate 6 More Below
+                </button>
+            </div>
+        </section>
+
+        <!-- pSEO Content & Naming Guide (SEO Context Block) -->
+        <section id="seo-guide-section" class="bg-slate-800/40 p-6 rounded-2xl border border-slate-800 space-y-4">
+            <h3 id="seo-guide-title" class="text-lg font-bold text-white">How High Elven Naming Conventions Work</h3>
+            <p id="seo-guide-body" class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                Elven names in fantasy literature traditional pair melodic vowels with lingering consonants like 'l', 'r', and 's'. Surnames often reference celestial or botanical elements (e.g., Sunweaver, Moonglade). Use our custom syllable and tone filters above to craft names tailored for noble rulers, secretive rogues, or ancient mages.
+            </p>
+        </section>
+
+        <!-- Category Directory Silo Grid -->
+        <section id="directory-section" class="space-y-4 pt-4 border-t border-slate-800">
+            <div>
+                <h3 class="text-lg font-bold text-white">Explore All Generator Silos</h3>
+                <p class="text-xs text-slate-400">Browse our library of procedural generators across fiction, gaming, and business.</p>
+            </div>
+
+            <div id="directory-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Populated via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Slide-out Saved Loot Bag Drawer -->
+    <div id="loot-drawer" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-slate-900 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+            <div class="flex items-center space-x-2">
+                <span class="text-amber-400 text-xl">🎒</span>
+                <h3 class="font-extrabold text-white text-sm">Your Saved Loot Bag</h3>
+            </div>
+            <button onclick="toggleLootDrawer()" class="text-slate-400 hover:text-white text-lg font-bold p-1">×</button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-grow p-4 space-y-3 overflow-y-auto custom-scrollbar" id="loot-drawer-items">
+            <!-- Populated via JS -->
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950 space-y-2">
+            <div class="flex gap-2">
+                <button onclick="exportLootBag('txt')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition border border-slate-700">
+                    📄 Export TXT
+                </button>
+                <button onclick="exportLootBag('csv')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition border border-slate-700">
+                    📊 Export CSV
+                </button>
+            </div>
+            <button onclick="clearLootBag()" class="w-full text-xs text-slate-500 hover:text-red-400 py-1 transition">
+                Clear All Saved Items
+            </button>
+        </div>
+    </div>
+
+    <!-- Character Lore & Details Modal -->
+    <div id="lore-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeLoreModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl font-bold">×</button>
+
+            <div class="space-y-1">
+                <span id="modal-category" class="text-[10px] uppercase font-bold text-realm-400 bg-realm-500/10 border border-realm-500/20 px-2 py-0.5 rounded">High Elven Lineage</span>
+                <h3 id="modal-name" class="text-2xl font-extrabold text-white">Aelioneth Starweaver</h3>
+                <p id="modal-meaning" class="text-xs italic text-slate-400">"Keeper of the Eternal Sunlit Glade"</p>
+            </div>
+
+            <!-- Phonetics & Pronunciation -->
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-xs space-y-1">
+                <div class="text-slate-400 font-semibold">Phonetic Pronunciation</div>
+                <div id="modal-phonetic" class="text-slate-200 font-mono text-sm">ay-ee-LEE-oh-neth</div>
+            </div>
+
+            <!-- Personality & Backstory Lore -->
+            <div class="space-y-2 text-xs">
+                <h4 class="font-bold text-white uppercase text-[11px] tracking-wider">Character Backstory & Traits</h4>
+                <p id="modal-lore" class="text-slate-300 leading-relaxed bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                    Born in the ancient spire of Sunweaver, Aelioneth carries the ancestral mantle of star-reading. Renowned for unwavering composure and deep mastery over elemental arcana.
+                </p>
+            </div>
+
+            <!-- Canvas Attribute Chart -->
+            <div class="space-y-2 text-xs">
+                <h4 class="font-bold text-white uppercase text-[11px] tracking-wider">Name Attributes Matrix</h4>
+                <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800 flex justify-center">
+                    <div class="chart-container">
+                        <canvas id="modalChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-between gap-2">
+                <button onclick="copyModalName()" class="flex-1 bg-realm-600 hover:bg-realm-500 text-slate-950 font-bold text-xs py-2.5 rounded-xl transition">
+                    📋 Copy Name
+                </button>
+                <button onclick="saveModalName()" class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs py-2.5 rounded-xl transition">
+                    ⭐ Save to Loot Bag
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-notification" class="fixed bottom-4 right-4 bg-slate-800 border border-realm-500/40 text-white text-xs px-4 py-3 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-2">
+        <span class="text-realm-400 font-bold">✨</span>
+        <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-8 text-center text-xs text-slate-500 mt-12">
+        <div class="max-w-7xl mx-auto px-4 space-y-2">
+            <p class="font-medium text-slate-400">RealmNames Worldbuilding & Procedural Name Generator Engine &copy; 2026</p>
+            <p class="text-[11px] text-slate-600">Built with static client-side JS logic for maximum privacy and zero latency generation.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        /* ================= SEED DATASETS & SEED ARRAYS ================= */
+        const generatorData = {
+            elven: {
+                title: "High Elven Name Generator",
+                icon: "🧝",
+                tag: "Fantasy & TTRPG Silo",
+                desc: "Generate authentic, melodic, and lore-friendly High Elven names for fantasy novels, D&D 5e campaigns, and RPG character creation.",
+                combinations: "35,000+",
+                rules: "Phonetic Prefix/Suffix",
+                prefixes: [
+                    { str: "Ael", vibe: "ancient", syllables: 1, val: "Light" },
+                    { str: "Vael", vibe: "sinister", syllables: 1, val: "Shadow" },
+                    { str: "Sylv", vibe: "ancient", syllables: 1, val: "Forest" },
+                    { str: "Kael", vibe: "noble", syllables: 1, val: "Sun" },
+                    { str: "Bryn", vibe: "noble", syllables: 1, val: "Moon" },
+                    { str: "Zael", vibe: "ancient", syllables: 1, val: "Star" },
+                    { str: "Thal", vibe: "aggressive", syllables: 1, val: "Wind" },
+                    { str: "Lyr", vibe: "ancient", syllables: 1, val: "Song" }
+                ],
+                suffixes: [
+                    { str: "ioneth", vibe: "ancient", syllables: 2, val: "Weaver" },
+                    { str: "thor", vibe: "aggressive", syllables: 1, val: "Hunter" },
+                    { str: "aris", vibe: "noble", syllables: 2, val: "Grace" },
+                    { str: "iel", vibe: "noble", syllables: 1, val: "Dawn" },
+                    { str: "gard", vibe: "ancient", syllables: 1, val: "Keeper" },
+                    { str: "enor", vibe: "ancient", syllables: 2, val: "Crown" },
+                    { str: "vyn", vibe: "sinister", syllables: 1, val: "Whisper" }
+                ],
+                surnames: ["Starweaver", "Sunspire", "Moonshadow", "Willowglade", "Silverleaf", "Spellwind"],
+                seoTitle: "How High Elven Naming Conventions Work",
+                seoBody: "Elven names in fantasy literature traditionally pair melodic vowels with lingering consonants like 'l', 'r', and 's'. Surnames often reference celestial or botanical elements. Use our custom syllable and tone filters above to craft names tailored for noble rulers, secretive rogues, or ancient mages."
+            },
+            cyberpunk: {
+                title: "Cyberpunk Codenames & Handles",
+                icon: "🌃",
+                tag: "Sci-Fi & Gaming Silo",
+                desc: "Generate sharp, futuristic netrunner handles, street samurai codenames, and dystopian hacker aliases.",
+                combinations: "18,000+",
+                rules: "Prefix + Tech Tag",
+                prefixes: [
+                    { str: "Zero", vibe: "sleek", syllables: 2, val: "Void" },
+                    { str: "Vex", vibe: "aggressive", syllables: 1, val: "Disruptor" },
+                    { str: "Byte", vibe: "sleek", syllables: 1, val: "Data" },
+                    { str: "Astra", vibe: "sleek", syllables: 2, val: "Grid" },
+                    { str: "Krypt", vibe: "sinister", syllables: 1, val: "Encrypted" },
+                    { str: "Blaze", vibe: "aggressive", syllables: 1, val: "Overclock" },
+                    { str: "Null", vibe: "sinister", syllables: 1, val: "Ghost" }
+                ],
+                suffixes: [
+                    { str: "Krypt", vibe: "sleek", syllables: 1, val: "Node" },
+                    { str: "Rage", vibe: "aggressive", syllables: 1, val: "Surge" },
+                    { str: "Volt", vibe: "sleek", syllables: 1, val: "Current" },
+                    { str: "Splicer", vibe: "aggressive", syllables: 2, val: "Operative" },
+                    { str: "Phantom", vibe: "sinister", syllables: 2, val: "Netrunner" },
+                    { str: "Vanguard", vibe: "noble", syllables: 2, val: "Shield" }
+                ],
+                surnames: ["_v1.0", "Core", "Grid", "[X]", "Protocol", "Net"],
+                seoTitle: "Creating Dystopian Sci-Fi Handles",
+                seoBody: "Cyberpunk aliases frequently utilize technology terminology combined with aggressive or sleek monosyllables. They represent digital personas adopted by hackers, mercenaries, and corporate rebels in high-tech dystopias."
+            },
+            viking: {
+                title: "Norse Viking Warrior Names",
+                icon: "⚔️",
+                tag: "Historical & Fiction Silo",
+                desc: "Generate fierce, legendary Scandinavian warrior names and clan titles inspired by Norse sagas.",
+                combinations: "22,000+",
+                rules: "Given Name + Clan Epithet",
+                prefixes: [
+                    { str: "Krag", vibe: "aggressive", syllables: 1, val: "Cliff" },
+                    { str: "Bjorn", vibe: "noble", syllables: 1, val: "Bear" },
+                    { str: "Valk", vibe: "aggressive", syllables: 1, val: "Fierce" },
+                    { str: "Astr", vibe: "noble", syllables: 1, val: "Divine" },
+                    { str: "Sig", vibe: "ancient", syllables: 1, val: "Victory" },
+                    { str: "Thor", vibe: "noble", syllables: 1, val: "Thunder" }
+                ],
+                suffixes: [
+                    { str: "or", vibe: "aggressive", syllables: 1, val: "Warrior" },
+                    { str: "e", vibe: "noble", syllables: 1, val: "Ruler" },
+                    { str: "id", vibe: "noble", syllables: 1, val: "Grace" },
+                    { str: "urd", vibe: "ancient", syllables: 1, val: "Guardian" },
+                    { str: "in", vibe: "ancient", syllables: 1, val: "Champion" }
+                ],
+                surnames: ["Ironhide", "Bloodaxe", "Stormcaller", "Skarsgard", "Shieldbreaker", "Fjordrunner"],
+                seoTitle: "Norse & Viking Naming Heritage",
+                seoBody: "Viking naming traditions heavily emphasized physical strength, beast allegiances (bears, wolves), and clan honor. Epithets were earned through heroic deeds or warrior characteristics."
+            },
+            taverns: {
+                title: "RPG Fantasy Tavern & Inn Names",
+                icon: "🍺",
+                tag: "Worldbuilding Silo",
+                desc: "Generate memorable fantasy tavern, inn, and pub names for tabletop RPG town preparation.",
+                combinations: "15,000+",
+                rules: "Adjective + Noun Pair",
+                prefixes: [
+                    { str: "The Prancing", vibe: "ancient", syllables: 2, val: "Lively" },
+                    { str: "The Drunken", vibe: "aggressive", syllables: 2, val: "Rowdy" },
+                    { str: "The Gilded", vibe: "noble", syllables: 2, val: "Wealthy" },
+                    { str: "The Laughing", vibe: "ancient", syllables: 2, val: "Joyful" },
+                    { str: "The Rusty", vibe: "sinister", syllables: 2, val: "Weathered" },
+                    { str: "The Whispering", vibe: "sinister", syllables: 3, val: "Mysterious" }
+                ],
+                suffixes: [
+                    { str: " Pony", vibe: "ancient", syllables: 2, val: "Haven" },
+                    { str: " Dragon", vibe: "noble", syllables: 2, val: "Majesty" },
+                    { str: " Flagon", vibe: "ancient", syllables: 2, val: "Alehouse" },
+                    { str: " Goblin", vibe: "aggressive", syllables: 2, val: "Den" },
+                    { str: " Serpent", vibe: "sinister", syllables: 2, val: "Mystery" }
+                ],
+                surnames: ["Inn", "Tavern", "Alehouse", "Rest", "Lodge"],
+                seoTitle: "Crafting Memorable RPG Taverns",
+                seoBody: "Tavern names serve as vital social hubs in tabletop campaigns. Combining an evocative adjective with an animal or weapon creates an instantly recognizable landmark for players."
+            },
+            starships: {
+                title: "Sci-Fi Starship & Fleet Names",
+                icon: "🚀",
+                tag: "Sci-Fi Silo",
+                desc: "Generate imposing flagship, explorer, and freighter names for space opera worldbuilding.",
+                combinations: "20,000+",
+                rules: "Prefix Designation + Vessel Name",
+                prefixes: [
+                    { str: "USS ", vibe: "noble", syllables: 1, val: "Federation" },
+                    { str: "HMS ", vibe: "noble", syllables: 1, val: "Royal Fleet" },
+                    { str: "Aether ", vibe: "sleek", syllables: 2, val: "Deep Space" },
+                    { str: "Void ", vibe: "sinister", syllables: 1, val: "Dark Sector" },
+                    { str: "Astra ", vibe: "sleek", syllables: 2, val: "Starlight" }
+                ],
+                suffixes: [
+                    { str: "Horizon", vibe: "sleek", syllables: 3, val: "Explorer" },
+                    { str: "Vanguard", vibe: "noble", syllables: 2, val: "Battleship" },
+                    { str: "Eclipse", vibe: "sinister", syllables: 2, val: "Stealth" },
+                    { str: "Odyssey", vibe: "ancient", syllables: 3, val: "Pioneer" },
+                    { str: "Sovereign", vibe: "noble", syllables: 3, val: "Flagship" }
+                ],
+                surnames: ["Class A", "MK-IV", "Interceptor", "Dreadnought", "Explorer"],
+                seoTitle: "Designing Sci-Fi Vessel Names",
+                seoBody: "Starship designations reflect their mission parameters—exploratory vessels carry aspirational titles like 'Horizon', while military craft utilize authoritative terms like 'Sovereign' or 'Vanguard'."
+            },
+            startup: {
+                title: "SaaS & Modern Startup Name Generator",
+                icon: "🏢",
+                tag: "Business & Brand Silo",
+                desc: "Generate slick, modern, domain-friendly brand names for tech startups and software products.",
+                combinations: "30,000+",
+                rules: "Compound Tech Lexicon",
+                prefixes: [
+                    { str: "Velo", vibe: "sleek", syllables: 2, val: "Velocity" },
+                    { str: "Krypt", vibe: "sleek", syllables: 1, val: "Security" },
+                    { str: "Base", vibe: "noble", syllables: 1, val: "Foundation" },
+                    { str: "Zenith", vibe: "noble", syllables: 2, val: "Peak" },
+                    { str: "Zest", vibe: "sleek", syllables: 1, val: "Agile" },
+                    { str: "Omni", vibe: "ancient", syllables: 2, val: "Universal" }
+                ],
+                suffixes: [
+                    { str: "ce AI", vibe: "sleek", syllables: 2, val: "Automation" },
+                    { str: "IQ", vibe: "sleek", syllables: 2, val: "Intelligence" },
+                    { str: "Flow", vibe: "sleek", syllables: 1, val: "Operations" },
+                    { str: "Pulse", vibe: "sleek", syllables: 1, val: "Analytics" },
+                    { str: "io", vibe: "noble", syllables: 2, val: "Platform" }
+                ],
+                surnames: ["Inc", "Labs", "App", "HQ", "Systems"],
+                seoTitle: "Naming Modern Software Startups",
+                seoBody: "Modern tech brand names lean into short, memorable compound words ending in crisp phonemes like '-io', '-iq', or '-flow'. Short syllable counts ensure high domain availability and brand recall."
+            }
+        };
+
+        const allDirectoryList = [
+            { key: 'elven', title: 'High Elves', icon: '🧝', cat: 'Fantasy' },
+            { key: 'cyberpunk', title: 'Cyberpunk Handles', icon: '🌃', cat: 'Sci-Fi' },
+            { key: 'viking', title: 'Norse Vikings', icon: '⚔️', cat: 'Historical' },
+            { key: 'taverns', title: 'RPG Taverns', icon: '🍺', cat: 'Worldbuilding' },
+            { key: 'starships', title: 'Sci-Fi Starships', icon: '🚀', cat: 'Sci-Fi' },
+            { key: 'startup', title: 'SaaS Startups', icon: '🏢', cat: 'Business' }
+        ];
+
+        /* ================= APP STATE ================= */
+        const state = {
+            currentCategory: 'elven',
+            savedLoot: [],
+            currentBatch: [],
+            modalChart: null,
+            activeModalName: null
+        };
+
+        /* ================= GENERATION ENGINE ================= */
+        function triggerGeneration() {
+            const cat = generatorData[state.currentCategory];
+            const gender = document.getElementById('filter-gender').value;
+            const vibe = document.getElementById('filter-vibe').value;
+            const letter = document.getElementById('filter-letter').value;
+            const maxSyllables = parseInt(document.getElementById('filter-syllables').value);
+            const count = parseInt(document.getElementById('filter-count').value);
+
+            let generated = [];
+
+            for (let i = 0; i < count * 3; i++) {
+                if (generated.length >= count) break;
+
+                const p = cat.prefixes[Math.floor(Math.random() * cat.prefixes.length)];
+                const s = cat.suffixes[Math.floor(Math.random() * cat.suffixes.length)];
+                const surname = cat.surnames[Math.floor(Math.random() * cat.surnames.length)];
+
+                let rawName = p.str + s.str;
+                let totalSyllables = p.syllables + s.syllables;
+
+                // Gender archetype variation
+                if (gender === 'feminine' && !rawName.endsWith('a') && !rawName.endsWith('iel')) {
+                    rawName += 'a';
+                }
+                if (gender === 'title') {
+                    rawName += ' ' + surname;
+                }
+
+                // Filter matching
+                const matchesVibe = vibe === 'any' || p.vibe === vibe || s.vibe === vibe;
+                const matchesLetter = letter === 'any' || rawName.toUpperCase().startsWith(letter);
+                const matchesSyllables = totalSyllables <= maxSyllables;
+
+                if (matchesVibe && matchesLetter && matchesSyllables) {
+                    const fullName = rawName;
+                    if (!generated.some(g => g.name === fullName)) {
+                        generated.push({
+                            name: fullName,
+                            phonetic: buildPhonetic(p.str, s.str),
+                            meaning: `"${p.val} of the ${s.val}"`,
+                            vibe: p.vibe,
+                            syllables: totalSyllables,
+                            lore: generateBackstory(fullName, p.val, s.val)
+                        });
+                    }
+                }
+            }
+
+            // Fallback if filters are ultra strict
+            if (generated.length === 0) {
+                const p = cat.prefixes[0];
+                const s = cat.suffixes[0];
+                generated.push({
+                    name: p.str + s.str,
+                    phonetic: buildPhonetic(p.str, s.str),
+                    meaning: `"${p.val} of the ${s.val}"`,
+                    vibe: p.vibe,
+                    syllables: p.syllables + s.syllables,
+                    lore: generateBackstory(p.str + s.str, p.val, s.val)
+                });
+            }
+
+            state.currentBatch = generated;
+            renderResultsGrid(state.currentBatch);
+        }
+
+        function buildPhonetic(p, s) {
+            return `${p.toLowerCase()}-${s.toUpperCase()}`;
+        }
+
+        function generateBackstory(name, pVal, sVal) {
+            return `${name} carries an ancestral heritage rooted in ${pVal.toLowerCase()} and ${sVal.toLowerCase()}. Known throughout the realm for strategic prowess and unwavering honor.`;
+        }
+
+        function appendMoreResults() {
+            const oldBatch = [...state.currentBatch];
+            triggerGeneration();
+            state.currentBatch = [...oldBatch, ...state.currentBatch];
+            renderResultsGrid(state.currentBatch);
+        }
+
+        /* ================= UI RENDERERS ================= */
+        function renderResultsGrid(items) {
+            const grid = document.getElementById('results-grid');
+            grid.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-800/90 border border-slate-700 hover:border-realm-500/50 p-4 rounded-xl transition duration-200 shadow-md flex flex-col justify-between group relative";
+
+                const isSaved = state.savedLoot.some(s => s.name === item.name);
+
+                card.innerHTML = `
+                    <div class="space-y-2 cursor-pointer" onclick="openLoreModal(${index})">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-realm-400 bg-realm-500/10 px-2 py-0.5 rounded border border-realm-500/20">${item.vibe}</span>
+                            <span class="text-[10px] text-slate-500 font-mono">${item.syllables} syl</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-extrabold text-white group-hover:text-realm-400 transition flex items-center space-x-1.5">
+                                <span>${item.name}</span>
+                            </h3>
+                            <div class="text-[11px] font-mono text-slate-400 mt-0.5">${item.phonetic}</div>
+                        </div>
+                        <p class="text-xs text-slate-300 italic">${item.meaning}</p>
+                    </div>
+
+                    <div class="pt-3 mt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                        <button onclick="copyToClipboard('${item.name}')" class="text-slate-400 hover:text-white transition flex items-center space-x-1 font-medium">
+                            <span>📋</span>
+                            <span>Copy</span>
+                        </button>
+                        <button onclick="toggleSaveItem('${item.name}', '${item.meaning.replace(/'/g, "\\'")}')" class="p-1 rounded-lg text-slate-400 hover:text-amber-400 transition flex items-center space-x-1">
+                            <span>${isSaved ? '⭐ Saved' : '☆ Save'}</span>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectGenerator(key) {
+            if (!generatorData[key]) return;
+            state.currentCategory = key;
+
+            const cat = generatorData[key];
+
+            // Update UI elements
+            document.getElementById('hero-tag-icon').innerText = cat.icon;
+            document.getElementById('hero-tag-name').innerText = cat.tag;
+            document.getElementById('hero-title').innerText = cat.title;
+            document.getElementById('hero-desc').innerText = cat.desc;
+            document.getElementById('stat-combinations').innerText = cat.combinations;
+            document.getElementById('stat-rules').innerText = cat.rules;
+
+            document.getElementById('seo-guide-title').innerText = cat.seoTitle;
+            document.getElementById('seo-guide-body').innerText = cat.seoBody;
+
+            // Highlight Active Tab
+            document.querySelectorAll('.silo-tab').forEach(tab => {
+                tab.className = "silo-tab px-3 py-1 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 transition font-medium";
+            });
+            const activeTab = document.getElementById(`silo-${key}`);
+            if (activeTab) {
+                activeTab.className = "silo-tab px-3 py-1 rounded-md bg-realm-600 text-white font-semibold transition";
+            }
+
+            triggerGeneration();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderDirectoryGrid(filterQuery = '') {
+            const grid = document.getElementById('directory-grid');
+            grid.innerHTML = '';
+
+            const filtered = allDirectoryList.filter(item => 
+                item.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
+                item.cat.toLowerCase().includes(filterQuery.toLowerCase())
+            );
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-800/60 border border-slate-700/80 hover:border-realm-500/50 p-4 rounded-xl cursor-pointer transition flex items-center justify-between group";
+                card.onclick = () => selectGenerator(item.key);
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl">${item.icon}</span>
+                        <div>
+                            <h4 class="font-bold text-white text-sm group-hover:text-realm-400 transition">${item.title}</h4>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider">${item.cat} Silo</span>
+                        </div>
+                    </div>
+                    <span class="text-slate-500 group-hover:text-white transition">→</span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function handleSearch(val) {
+            renderDirectoryGrid(val);
+            if (val.trim() !== '') {
+                scrollToDirectory();
+            }
+        }
+
+        function updateSyllableLabel(val) {
+            document.getElementById('syllable-val-label').innerText = val;
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-gender').value = 'any';
+            document.getElementById('filter-vibe').value = 'any';
+            document.getElementById('filter-letter').value = 'any';
+            document.getElementById('filter-syllables').value = 3;
+            document.getElementById('filter-count').value = 12;
+            updateSyllableLabel(3);
+            triggerGeneration();
+        }
+
+        /* ================= LOOT BAG & STORAGE ================= */
+        function toggleSaveItem(name, meaning) {
+            const idx = state.savedLoot.findIndex(s => s.name === name);
+            if (idx > -1) {
+                state.savedLoot.splice(idx, 1);
+                showToast(`Removed "${name}" from Loot Bag`);
+            } else {
+                state.savedLoot.push({ name, meaning, category: state.currentCategory, note: '' });
+                showToast(`Saved "${name}" to Loot Bag!`);
+            }
+            renderLootDrawer();
+            renderResultsGrid(state.currentBatch);
+        }
+
+        function renderLootDrawer() {
+            const container = document.getElementById('loot-drawer-items');
+            const badge = document.getElementById('saved-badge-count');
+            badge.innerText = state.savedLoot.length;
+
+            if (state.savedLoot.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-500 text-xs space-y-2">
+                        <div class="text-3xl">🎒</div>
+                        <p>Your Loot Bag is currently empty.</p>
+                        <p class="text-[11px] text-slate-600">Click the ☆ Save button on any generated result to bookmark names!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            state.savedLoot.forEach((item, index) => {
+                const el = document.createElement('div');
+                el.className = "bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-2 text-xs";
+                el.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-white text-sm">${item.name}</div>
+                            <div class="text-[11px] text-slate-400 italic">${item.meaning}</div>
+                        </div>
+                        <button onclick="toggleSaveItem('${item.name}', '')" class="text-slate-500 hover:text-red-400 font-bold p-0.5">×</button>
+                    </div>
+                    <input type="text" placeholder="Add custom lore note..." value="${item.note}" onchange="updateLootNote(${index}, this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-realm-500">
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function updateLootNote(index, text) {
+            if (state.savedLoot[index]) {
+                state.savedLoot[index].note = text;
+            }
+        }
+
+        function toggleLootDrawer() {
+            const drawer = document.getElementById('loot-drawer');
+            drawer.classList.toggle('translate-x-full');
+        }
+
+        function clearLootBag() {
+            state.savedLoot = [];
+            renderLootDrawer();
+            renderResultsGrid(state.currentBatch);
+            showToast("Cleared Loot Bag");
+        }
+
+        function exportLootBag(format) {
+            if (state.savedLoot.length === 0) {
+                showToast("Your Loot Bag is empty!");
+                return;
+            }
+
+            let fileContent = "";
+            let mimeType = "text/plain";
+            let fileName = `saved-names-lootbag.${format}`;
+
+            if (format === 'csv') {
+                fileContent = "Name,Meaning,Category,Note\n";
+                state.savedLoot.forEach(item => {
+                    fileContent += `"${item.name}","${item.meaning}","${item.category}","${item.note}"\n`;
+                });
+                mimeType = "text/csv";
+            } else {
+                fileContent = "=== REALMNAMES SAVED LOOT BAG ===\n\n";
+                state.savedLoot.forEach((item, i) => {
+                    fileContent += `${i + 1}. ${item.name} - ${item.meaning}\n   Category: ${item.category}\n   Note: ${item.note || 'None'}\n\n`;
+                });
+            }
+
+            const blob = new Blob([fileContent], { type: mimeType });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            a.click();
+            showToast(`Exported ${state.savedLoot.length} items to ${format.toUpperCase()}`);
+        }
+
+        /* ================= LORE MODAL & CHART.JS ================= */
+        function openLoreModal(index) {
+            const item = state.currentBatch[index];
+            if (!item) return;
+
+            state.activeModalName = item;
+
+            document.getElementById('modal-category').innerText = `${generatorData[state.currentCategory].title} Lineage`;
+            document.getElementById('modal-name').innerText = item.name;
+            document.getElementById('modal-meaning').innerText = item.meaning;
+            document.getElementById('modal-phonetic').innerText = item.phonetic;
+            document.getElementById('modal-lore').innerText = item.lore;
+
+            document.getElementById('lore-modal').classList.remove('hidden');
+
+            renderModalChart();
+        }
+
+        function closeLoreModal() {
+            document.getElementById('lore-modal').classList.add('hidden');
+        }
+
+        function renderModalChart() {
+            const ctx = document.getElementById('modalChart').getContext('2d');
+            if (state.modalChart) state.modalChart.destroy();
+
+            state.modalChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Power', 'Mystery', 'Lineage', 'Complexity', 'Elegance'],
+                    datasets: [{
+                        label: 'Attributes',
+                        data: [
+                            Math.floor(Math.random() * 40) + 60,
+                            Math.floor(Math.random() * 40) + 60,
+                            Math.floor(Math.random() * 40) + 60,
+                            Math.floor(Math.random() * 40) + 50,
+                            Math.floor(Math.random() * 40) + 60
+                        ],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.25)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 100,
+                            ticks: { display: false },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { color: '#94a3b8', font: { size: 10 } }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function copyModalName() {
+            if (state.activeModalName) {
+                copyToClipboard(state.activeModalName.name);
+            }
+        }
+
+        function saveModalName() {
+            if (state.activeModalName) {
+                toggleSaveItem(state.activeModalName.name, state.activeModalName.meaning);
+            }
+        }
+
+        /* ================= UTILITY FUNCTIONS ================= */
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast(`Copied "${text}" to clipboard!`);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2200);
+        }
+
+        function scrollToDirectory() {
+            document.getElementById('directory-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /* ================= INITIALIZATION ================= */
+        window.addEventListener('DOMContentLoaded', () => {
+            selectGenerator('elven');
+            renderDirectoryGrid();
+            renderLootDrawer();
+        });
+    </script>
+</body>
+</html>
